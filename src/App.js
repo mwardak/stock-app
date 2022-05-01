@@ -1,20 +1,7 @@
-import React, { useState, useRef, useEffect } from "react";
-
-import {
-  Button,
-  Table,
-  Typography,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  Grid,
-  TextField,
-  Container,
-  Paper,
-} from "@mui/material";
-
-const stocksJson = require("./data.json");
+import StocksTable from "./StocksTable";
+import React, { useState, useEffect } from "react";
+import Form from "./Form";
+import { Typography, Container, Paper } from "@mui/material";
 
 //create a theme for the app that can be used in the components
 const style = {
@@ -22,96 +9,72 @@ const style = {
   marginBottom: "20px",
   marginRight: "20px",
   display: "flex",
-  width: "600px",
+  width: "420px",
   padding: "20px",
   borderRadius: "10px",
 };
 
 const App = () => {
-  const [stock, setStock] = useState([]);
+  const [stocks, setStocks] = useState([]);
   const [inputSymbol, setInputSymbol] = useState("");
+  const [inputTime, setInputTime] = useState("");
 
-  const stockData = stocksJson;
-  //create a const 10 days ago
-  let d = 0;
-  // for (let i = currentDayOfMonth - 10; i < currentDayOfMonth; i++) {
-  stockData.forEach((stock) => {
-    // const i = currentDayOfMonth - d;
-    stock.date = new Date(Date.now() - d * 86400000)
-      .toLocaleString()
-      .split(",")[0];
-    console.log(stock.date);
-    stock.price = Math.floor(Math.random() * (100 - 1) + 1);
-    d++;
-  });
-  // }
+  const generateData = (numOfDays, stockSymbol) => {
+    let data = [];
+    //initiate the data with the first day
+    for (let i = 0; i < numOfDays; i++) {
+      if (i === 0) {
+        data.push({
+          symbol: stockSymbol,
+          date: new Date(Date.now() - i * 24 * 60 * 60 * 1000)
+            .toLocaleString()
+            .split(",")[0],
+          price: (Math.random() * (100 - 1) + 1).toFixed(3),
+          mediaCount: Math.floor(Math.random() * (100 - 1) + 1),
+        });
+        //guarantee that mediaCount is always increasing
+      } else {
+        data.push({
+          symbol: stockSymbol,
+          date: new Date(Date.now() - i * 24 * 60 * 60 * 1000)
+            .toLocaleString()
+            .split(",")[0],
+          price: (Math.random() * (100 - 1) + 1).toFixed(3),
+          mediaCount:
+            data[i - 1].mediaCount + Math.floor(Math.random() * (100 - 0 + 1)),
+        });
+      }
+    }
+    return data;
+  };
 
-  // const recommendStock = (stockPrice, socialMediaPosts) => {
-  //   if (socialMediaPosts > 0) {
-  //     if (stockPrice > 0) {
-  //       return "Buy";
-  //     } else {
-  //       return "Sell";
-  //     }
-  //   } else {
-  //     return "Hold";
-  //   }
-  // };
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setStocks(generateData(inputTime, inputSymbol));
+    setInputSymbol("");
+    setInputTime("");
+  };
+  console.log(stocks);
 
-  //take input symbol and number of days as input from form then set state
-
-  //and generate a number of objects based on number of days
+  useEffect(() => {
+    console.log(inputSymbol);
+    console.log(inputTime);
+  }, [inputSymbol, inputTime]);
 
   return (
     <>
       <Container>
         <Typography variant="h4">Stock App</Typography>
         <Paper sx={style}>
-          <form>
-            <Typography variant="h6" gutterBottom>
-              Search Stocks
-            </Typography>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  required
-                  id="stockSymbol"
-                  label="Stock Symbol"
-                  variant="outlined"
-                />
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <TextField
-                  required
-                  id="timeWindow"
-                  label="Time Window"
-                  variant="outlined"
-                />
-              </Grid>
-            </Grid>
-
-            <Button>Submit</Button>
-          </form>
+          <Form
+            handleSubmit={handleSubmit}
+            setInputSymbol={setInputSymbol}
+            inputSymbol={inputSymbol}
+            setInputTime={setInputTime}
+            inputTime={inputTime}
+          />
         </Paper>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Stock Symbol</TableCell>
-              <TableCell>Closing Price</TableCell>
-              <TableCell>Date</TableCell>
-              <TableCell>Recommendation</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            <TableRow key={stock.symbol}>
-              <TableCell>AMZN</TableCell>
-              <TableCell>20$</TableCell>
-              <TableCell>2020-01-01</TableCell>
-              <TableCell>Buy</TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
+        <StocksTable stocks={stocks} />
       </Container>
     </>
   );
